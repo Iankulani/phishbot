@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  phishbot:
+    build: .
+    container_name: phishbot
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    volumes:
+      - ./phishbot_data:/app/.phishbot
+      - ./logs:/app/logs
+      - ./wordlists:/app/wordlists
+      - ./captured:/app/captured
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - PHISHBOT_ENV=docker
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    stdin_open: true
+    tty: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  phishbot-dev:
+    build: 
+      context: .
+      target: builder
+    container_name: phishbot-dev
+    network_mode: host
+    privileged: true
+    volumes:
+      - .:/app
+      - ./phishbot_data:/app/.phishbot
+    environment:
+      - PHISHBOT_ENV=development
+    command: tail -f /dev/null
+    profiles:
+      - dev
